@@ -1,1 +1,1 @@
-console.log("LearnPlus - test");
+lplog("LearnPlus - test");

@@ -15,21 +15,16 @@
     },
     "content_scripts": [
         {
-            "matches": [
-                "<all_urls>"
-            ],
+            "matches": ["<all_urls>"],
             "js": [
                 "lib/jquery.js",
+                "lib/ensure.js",
                 "src/content.js"
             ]
         },
         {
-            "matches": [
-                "https://app.educationperfect.com/*"
-            ],
-            "js": [
-                "src/pages/educationperfect.js"
-            ]
+            "matches": ["https://app.educationperfect.com/*"],
+            "js": ["src/pages/educationperfect.js"]
         }
     ]
 }
