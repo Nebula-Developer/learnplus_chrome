@@ -20,12 +20,116 @@ function epInit() {
     fast();
 }
 
+var scratchLock = 0;
 async function epPrimaryLoop() {
-    
+    if (elmExists(".scratch-canvas") && scratchLock == 0) {
+        scratchLock = 1;
+        handleWriteCanvasText("Hello World! This is a test.");
+    }
 }
 
 async function epFastLoop() {
     ensureSkipPanel();
+}
+
+async function handleWriteCanvasText(text) {
+    var newCanvas = document.createElement("canvas");
+    var container = $(".scratch-canvas");
+    newCanvas.width = 800;
+    newCanvas.height = 500;
+    var ctx = newCanvas.getContext("2d");
+    ctx.font = "50px Monospace";
+    ctx.fillText(text, 10, 50);
+
+    var imgData = ctx.getImageData(0, 0, 1000, 1000);
+    var positions = [];
+    for (var i = 0; i < imgData.data.length; i += 4 * 4) {
+        if (imgData.data[i + 3] > 0) {
+            var x = (i / 4) % 1000;
+            var y = Math.floor((i / 4) / 1000);
+            positions.push({ x: x, y: y });
+        }
+    }
+    sketchCanvasDrawPositions(positions);
+}
+
+function makeMouseEvent(type, x, y) {
+    // Make mouseup/mousedown event, but not MouseEvents
+    var mouseEvent = new MouseEvent(type, {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y
+    });
+    return mouseEvent;
+}
+
+function getSketchCanvas() { return $(".scratch-canvas"); }
+
+function sketchCanvasDown(x, y) {
+    var canvas = getSketchCanvas();
+    var mouseEvent = makeMouseEvent("mousedown", x + canvas.offset().left, y + canvas.offset().top);
+    canvas[0].dispatchEvent(mouseEvent);
+}
+
+function sketchCanvasUp(x, y) {
+    var canvas = getSketchCanvas();
+    var mouseEvent = makeMouseEvent("mouseup", x + canvas.offset().left, y + canvas.offset().top);
+    canvas[0].dispatchEvent(mouseEvent);
+}
+
+function sketchCanvasMove(x, y) {
+    var canvas = getSketchCanvas();
+    var mouseEvent = makeMouseEvent("mousemove", x + canvas.offset().left, y + canvas.offset().top);
+    canvas[0].dispatchEvent(mouseEvent);
+}
+
+async function sketchCanvasDrawPositions(positions) {
+    $(".scratch-canvas").css("pointer-events", "none");
+    var canvas = getSketchCanvas();
+    var first = positions[0];
+    sketchCanvasDown(first.x, first.y);
+    await sleep(10);
+    var oldY = first.y;
+    
+    var x = 0;
+    var y = 0;
+    var direction = 1;
+    var lastTime = Date.now();
+
+    while (positions.length > 0) {
+        var index = -1;
+        for (var i = 0; i < positions.length; i++) {
+            if (positions[i].x == x && positions[i].y == y) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {
+            sketchCanvasDown(positions[index].x, positions[index].y);
+            await sleep(5);
+            sketchCanvasUp(positions[index].x, positions[index].y);
+            positions.splice(index, 1);
+
+            var howManyLeft = positions.length;
+            if (howManyLeft % 10 == 0) {
+                lplog("LearnPlus - " + howManyLeft + " pixels left to draw.");
+            }
+        }
+        y += direction;
+        if (y >= 1000) {
+            y = 999;
+            x++;
+            direction = -1;
+        } else if (y < 0) {
+            y = 0;
+            x++;
+            direction = 1;
+        }
+    }
+
+    $(".scratch-canvas").css("pointer-events", "auto");
 }
 
 async function ensureSkipPanel() {
