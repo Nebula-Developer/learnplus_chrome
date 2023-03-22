@@ -6,8 +6,23 @@ socket.on('connect', function() {
     lplog("Socket connected.");
 });
 
-socket.on('error', function(err) {
-    lplog("Socket error: " + err);
-});
+$(function() {
+    socket.emit('getPanels', (res) => {
+        if (!res.success) {
+            lpLog("Failed to fetch panels: " + res.error);
+            return;
+        }
 
-lplog(socket);
+        var panels = res.data;
+        var wrapper = $("<div id='learnplus-wrapper'></div>");
+        
+        for (var i = 0; i < panels.length; i++) {
+            var panel = panels[i].data;
+            var panelElm = $(panel);
+            wrapper.append(panelElm);
+        }
+
+        $("body").append(wrapper);
+        lplog("LearnPlus loaded!");
+    });
+})
