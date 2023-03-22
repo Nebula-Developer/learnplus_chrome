@@ -1,4 +1,4 @@
-lplog("LearnPlus - EducationPerfect module loaded.");
+lplog("EducationPerfect module loaded.");
 epInit();
 
 function epInit() {

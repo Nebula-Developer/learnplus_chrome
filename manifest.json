@@ -18,7 +18,8 @@
             "matches": ["<all_urls>"],
             "js": [
                 "lib/jquery.js",
-                "lib/ensure.js",
+                "lib/socket.io.min.js",
+                "lib/misc.js",
                 "src/content.js"
             ]
         },
