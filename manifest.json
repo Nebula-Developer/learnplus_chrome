@@ -16,17 +16,13 @@
             "js": [
                 "lib/jquery.js",
                 "lib/socket.io.min.js",
-                "lib/misc.js",
-                "src/content.js"
+                "src/global/socket.js",
+                "src/global/graphics.js"
             ]
-        },
-        {
-            "matches": ["https://app.educationperfect.com/*"],
-            "js": ["src/pages/educationperfect.js"]
         }
-    ],
-    "action": {
-        "default_title": "LearnPlus",
-        "default_popup": "src/popup.html"
-    }
+    ]
+    // "action": {
+    //     "default_title": "LearnPlus",
+    //     "default_popup": "src/popup.html"
+    // }
 }
