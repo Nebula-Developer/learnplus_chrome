@@ -1,4 +1,5 @@
-const socket = io('https://learnplus.nebuladev.net');
+const root = "http://localhost:3002";
+const socket = io(root);
 
 function login(username, password) {
     return new Promise((resolve, reject) => {

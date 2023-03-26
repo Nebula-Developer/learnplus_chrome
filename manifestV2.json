@@ -1,0 +1,29 @@
+{
+    "manifest_version": 2,
+    "name": "LearnPlus",
+    "description": "LearnPlus improves your learning experience by adding useful features to your favorite learning platforms.",
+    "version": "0.0.1",
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": [
+                "lib/jquery.js",
+                "lib/socket.io.min.js",
+                "src/global/socket.js",
+                "src/global/loader.js",
+                "src/global/panels.js",
+                "src/global/alerts.js",
+                "src/global/messages.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "storage",
+        "tabs",
+        "webNavigation",
+        "contextMenus",
+        "cookies",
+        "webRequest",
+        "webRequestBlocking"
+    ]
+}

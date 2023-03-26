@@ -33,7 +33,7 @@ class Panel {
         var buttons = $("<div class='learnplus-panel-buttons'></div>");
         topbar.append(buttons);
 
-        var close = $("<div class='learnplus-panel-close'><img ondragstart='return false;' class='learnplus-panel-close-icon' src='https://learnplus.nebuladev.net/Cross.png'></div>");
+        var close = $("<div class='learnplus-panel-close'><img ondragstart='return false;' class='learnplus-panel-close-icon' src='" + root + "/Cross.png'></div>");
         close.click(() => {
             this.close();
         });

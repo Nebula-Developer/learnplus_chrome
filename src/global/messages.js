@@ -88,3 +88,55 @@ function getMessages(channel, amount, callback) {
         if (res.success) callback(res.data);
     });
 }
+
+var createChannelPanel = new Panel($(window).width() / 2 - 200, $(window).height() / 2 - 200, 400, 400, 'Create Channel', `
+    <div class="create-channel-panel">
+        <div class="create-channel-panel-title learnplus-text-1 learnplus-text-large">Create Channel</div>
+        <div class="create-channel-panel-inputs">
+            <div class="create-channel-panel-input learnplus-mt-20">
+                <div class="create-channel-panel-input-title learnplus-text-2">Channel Name</div>
+                <input type="text" class="create-channel-panel-input-input learnplus-input-1" placeholder="Channel Name">
+            </div>
+            <div class="create-channel-panel-input">
+                <div class="create-channel-panel-input-title learnplus-text-2">Channel Password (Optional)</div>
+                <input type="text" class="create-channel-panel-input-input learnplus-input-1" placeholder="Channel Password">
+            </div>
+        </div>
+        <div class="create-channel-panel-buttons">
+            <div class="create-channel-panel-button learnplus-button-1">Create Channel</div>
+        </div>
+    </div>
+`);
+
+createChannelPanel.create();
+
+function createChannel() {
+    var name = $('.create-channel-panel-input-input').eq(0).val();
+    var password = $('.create-channel-panel-input-input').eq(1).val();
+
+    socket.emit('createChannel', { name: name, password: password }, (res) => {
+        console.log(res);
+        if (res) {
+            createChannelPanel.close();
+            socket.emit('joinChannel', { id: "" + res, password: password }, (res) => {
+                if (res.success) {
+                    showAlert("Information", `
+                    <div style="display: flex; flex-direction: column">
+                        <div class='learnplus-text-2'>New channel created!\n</div>
+                        <div class='learnplus-text-3'>Please refresh the page to see the new channel.</div>
+                    </div>
+                    `);
+                } else {
+                    showAlert("Error", "<div class='learnplus-text-2'>" + res.error + "</div>");
+                }
+            });
+        } else {
+            showAlert("Error", "<div class='learnplus-text-2'>" + res.error + "</div>");
+        }
+    });
+}
+
+var button = createChannelPanel.panel.find('.create-channel-panel-button');
+button.on('click', () => {
+    createChannel();
+});
