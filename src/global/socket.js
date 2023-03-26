@@ -17,7 +17,3 @@ function loginToken(username, token) {
         socket.emit('loginToken', { username, token }, (data) => { resolve(data); });
     });
 }
-
-createAccount("NebulaDeveloper", "nebula", "nebuladev.contact@gmail.com").then((res) => {
-    console.log(res);
-});

@@ -24,6 +24,21 @@ class Panel {
             panel.css("min-height", this.height);
         }
 
+        var resizeWrapper = $(`
+            <div class='learnplus-panel-resize-wrapper'>
+                <div class='learnplus-panel-resize learnplus-panel-resize-t'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-r'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-b'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-l'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-tl'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-tr'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-bl'></div>
+                <div class='learnplus-panel-resize learnplus-panel-resize-br'></div>
+            </div>
+        `);
+
+        panel.append(resizeWrapper);
+
         var topbar = $("<div class='learnplus-panel-topbar'></div>");
         panel.append(topbar);
         
@@ -77,7 +92,6 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
     var panel = $(this).parent();
     var panelFind = active_panels.find((p) => { return p.id == panel.attr("learnplus-panel-id"); });
     if (panelFind) {
-        console.log(panel.css("width"), panelFind.width, panel.css("height"), panelFind.height);
         if (panel.css("width").replace("px", "") != panelFind.width || panel.css("height").replace("px", "") != panelFind.height) {
             panel.css("width", panelFind.width);
             panel.css("height", panelFind.height);
@@ -85,9 +99,11 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
             var newY = panel.offset().top + e.offsetY;
             newX -= (panel.width() / 2);
             newY -= 20;
+            
+            setWindowSize("none");
+            panel.css("left", newX);
+            panel.css("top", newY);
         }
-        panel.css("left", newX);
-        panel.css("top", newY);
     }
 
     var panelArray = active_panels.find((panel) => { return panel.id == $(this).parent().attr("learnplus-panel-id"); });
@@ -99,9 +115,7 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
         }
         active_panels.push(panelArray);
 
-        for (var i = 0; i < active_panels.length; i++) {
-            active_panels[i].panel.css("z-index", i + 99999);
-        }
+        updatePanelZIndex();
     }
 
     var startX = e.pageX;
@@ -213,17 +227,30 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
             leftPos = "0";
         }
 
-        
+        var didModWidth = widthPos != pFind.width;
+        var didModHeight = heightPos != pFind.height;
 
-        panel.addClass("learnplus-panel-blur-transition");
-        setWindowSize("none");
-        setTimeout(() => {
-            panel.removeClass("learnplus-panel-blur-transition");
-            panel.css("left", leftPos);
-            panel.css("top", topPos);
-            panel.css("width", widthPos);
-            panel.css("height", heightPos);
-        }, 300);
+        if (didModWidth || didModHeight) {
+            var resizeDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--panel-resize-duration'));
+            if (resizeDuration == 0) {
+                setWindowSize("none");
+                panel.css("left", leftPos);
+                panel.css("top", topPos);
+                panel.css("width", widthPos);
+                panel.css("height", heightPos);
+            } else {
+                panel.addClass("learnplus-panel-blur-transition");
+                setWindowSize("none");
+                
+                setTimeout(() => {
+                    panel.removeClass("learnplus-panel-blur-transition");
+                    panel.css("left", leftPos);
+                    panel.css("top", topPos);
+                    panel.css("width", widthPos);
+                    panel.css("height", heightPos);
+                }, resizeDuration * 1000);
+            }
+        }
     };
 
     var docScroll = function(e) {
@@ -233,6 +260,25 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
     $(document).on("mousemove", docMouseMove);
     $(document).on("mouseup", docMouseUp);
 });
+
+$(document).on("mousedown", ".learnplus-panel", function(e) {
+    var panel = $(this);
+    var panelID = panel.attr("learnplus-panel-id");
+    var pFind = active_panels.find((p) => { return p.id == panelID; });
+    var pIndex = active_panels.indexOf(pFind);
+
+    if (pIndex != active_panels.length - 1) {
+        active_panels.splice(pIndex, 1);
+        active_panels.push(pFind);
+        updatePanelZIndex();
+    }
+});
+
+function updatePanelZIndex() {
+    for (var i = 0; i < active_panels.length; i++) {
+        active_panels[i].panel.css("z-index", i + 99999);
+    }
+}
 
 socket.emit('get', 'panel.css', (data) => {
     if (data.success) {
@@ -293,21 +339,21 @@ function setWindowSize(pos) {
 
     switch (pos) {
         case "left":
-            width = "calc(50% - 20px)";
+            width = "calc(50vw - 20px)";
             break;
 
         case "right":
-            width = "calc(50% - 20px)";
+            width = "calc(50vw - 20px)";
             left = "50%";
             break;
 
         case "top":
-            height = "calc(50% - 20px)";
+            height = "calc(50vh - 20px)";
             break;
 
         case "bottom":
-            height = "50%";
-            top = "50%";
+            height = "calc(50vh - 20px)";
+            top = "50vh";
             break;
 
         case "none":
@@ -317,29 +363,29 @@ function setWindowSize(pos) {
         case "tl":
             top = "0px";
             left = "0px";
-            width = "calc(50% - 20px)";
-            height = "calc(50% - 20px)";
+            width = "calc(50vw - 20px)";
+            height = "calc(50vh - 20px)";
             break;
 
         case "tr":
             top = "0px";
-            left = "50%";
-            width = "calc(50% - 20px)";
-            height = "calc(50% - 20px)";
+            left = "50vw";
+            width = "calc(50vw - 20px)";
+            height = "calc(50vh - 20px)";
             break;
 
         case "bl":
-            top = "50%";
+            top = "50vh";
             left = "0px";
-            width = "calc(50% - 20px)";
-            height = "calc(50% - 20px)";
+            width = "calc(50vw - 20px)";
+            height = "calc(50vh - 20px)";
             break;
 
         case "br":
-            top = "50%";
-            left = "50%";
-            width = "calc(50% - 20px)";
-            height = "calc(50% - 20px)";
+            top = "50vh";
+            left = "50vw";
+            width = "calc(50vw - 20px)";
+            height = "calc(50vh - 20px)";
             break;
     }
 
