@@ -352,19 +352,26 @@ function loadLoginPanels() {
     var registerButton = registerPanel.panel.find(".learnplus-register-button");
 
     loginButton.on("click", function() {
-        var username = loginPanel.panel.find(".learnplus-username-input").val();
+        var username = loginPanel.panel.find(".learnplus-username-input").val().trim();
         var password = loginPanel.panel.find(".learnplus-password-input").val();
         login(username, password).then((res) => {
             if (!res.success) {
                 loginPanel.panel.find(".learnplus-login-error").text(res.error);
             } else {
                 loginPanel.close();
+                
+                if (res.data.token) {
+                    globalBrowser.setStorage("token", JSON.stringify({
+                        username: res.data.username,
+                        token: res.data.token
+                    }));
+                }
             }
         })
     });
 
     registerButton.on("click", function() {
-        var username = registerPanel.panel.find(".learnplus-username-input").val();
+        var username = registerPanel.panel.find(".learnplus-username-input").val().trim();
         var email = registerPanel.panel.find(".learnplus-email-input").val();
         var password = registerPanel.panel.find(".learnplus-password-input").val();
         var passwordConfirm = registerPanel.panel.find(".learnplus-password-confirm-input").val();
@@ -379,6 +386,13 @@ function loadLoginPanels() {
                 registerPanel.panel.find(".learnplus-register-error").text(res.error);
             } else {
                 registerPanel.close();
+
+                if (res.data.token) {
+                    globalBrowser.setStorage("token", JSON.stringify({
+                        username: res.data.username,
+                        token: res.data.token
+                    }));
+                }
             }
         });
     });
@@ -397,7 +411,22 @@ function loadLoginPanels() {
     });
 }
 
-loadLoginPanels();
+function loadMainPanels() {
+    var mainPanel = new Panel(0, 0, 500, 500, "Main", `
+        <div class="learnplus-text-large learnplus-text-1">Main Panel</div>
+        <div class="learnplus-text-3 learnplus-mt-5 learnplus-text-center learnplus-logout-link learnplus-text-button-2">Logout</div>
+    `);
+
+    mainPanel.create();
+
+    var logoutLink = mainPanel.panel.find(".learnplus-logout-link");
+
+    logoutLink.on("click", function() {
+        globalBrowser.setStorage("token", null);
+        mainPanel.close();
+        loadLoginPanels();
+    });
+}
 
 function setWindowSize(pos) {
     var windowOverlay = $(".learnplus-window-scale-overlay");
@@ -470,3 +499,18 @@ function setWindowSize(pos) {
     windowOverlay.css("height", height);
     windowOverlay.css("top", top);
 }
+
+globalBrowser.getStorage("token").then((token) => {
+    if (token) {
+        var json = JSON.parse(token);
+        loginToken(json.username, json.token).then((res) => {
+            if (!res.success) {
+                loadLoginPanels();
+            } else {
+                loadMainPanels();
+            }
+        });
+    } else {
+        loadLoginPanels();
+    }
+});

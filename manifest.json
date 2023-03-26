@@ -20,6 +20,13 @@
                 "src/global/panels.js"
             ]
         }
+    ],
+    "permissions": [
+        "storage",
+        "tabs",
+        "webNavigation",
+        "contextMenus",
+        "cookies"
     ]
     // "action": {
     //     "default_title": "LearnPlus",
