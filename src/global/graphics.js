@@ -18,7 +18,8 @@ class Panel {
             panel.css("width", this.width);
             panel.css("height", this.height);
         } else {
-            
+            panel.css("min-width", this.width);
+            panel.css("min-height", this.height);
         }
 
         var topbar = $("<div class='learnplus-panel-topbar'></div>");
@@ -31,7 +32,7 @@ class Panel {
         var buttons = $("<div class='learnplus-panel-buttons'></div>");
         topbar.append(buttons);
 
-        var close = $("<div class='learnplus-panel-close'><i class='fas fa-times'></i></div>");
+        var close = $("<div class='learnplus-panel-close'><i class='fas fa-times learnplus-panel-close-icon'></i></div>");
         close.click(() => {
             panel.remove();
         });
@@ -41,11 +42,20 @@ class Panel {
         content.html(this.content);
         panel.append(content);
 
-        $("body").append(panel);
+        if ($(".learnplus-wrapper").length > 0) {
+            $(".learnplus-wrapper").append(panel);
+        } else {
+            $("body").append("<div class='learnplus-wrapper'></div>");
+            $(".learnplus-wrapper").append(panel);
+        }
     }
 }
 
 $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
+    // Make sure we are not on the close button
+    if ($(e.target).hasClass("learnplus-panel-close") || $(e.target).hasClass("learnplus-panel-close-icon")) return;
+    console.log("Classes: " + $(e.target).attr("class"));
+
     var panel = $(this).parent();
     
     var startX = e.pageX;
@@ -60,8 +70,17 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
         left = Math.max(0, left);
         top = Math.max(0, top);
 
-        left = Math.min($(window).width() - panel.width(), left);
-        top = Math.min($(window).height() - panel.height(), top);
+        var realWidth = panel.width();
+        var realHeight = panel.height();
+
+        var windowWidth = $(window).width();
+        var windowHeight = $(window).height();
+        
+        var widthOffset = windowWidth - realWidth;
+        var heightOffset = windowHeight - realHeight;
+
+        left = Math.min(widthOffset, left);
+        top = Math.min(heightOffset, top);
 
         panel.css("left", left);
         panel.css("top", top);
