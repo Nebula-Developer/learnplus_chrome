@@ -19,7 +19,8 @@
                 "src/global/socket.js",
                 "src/global/loader.js",
                 "src/global/panels.js",
-                "src/global/alerts.js"
+                "src/global/alerts.js",
+                "src/global/messages.js"
             ]
         }
     ],
