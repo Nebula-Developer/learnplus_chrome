@@ -53,3 +53,49 @@ function loadAlertStylesheets() {
 }
 
 loadAlertStylesheets();
+
+// When we click an alert and drag it more than 300px to the left, we close it
+$(document).on("mousedown", ".learnplus-alert", function(e) {
+    e.preventDefault();
+    var elm = $(this);
+    var alert = active_alerts.find((a) => a.elm.is(elm)).alert;
+
+    var startX = e.pageX;
+    var startY = e.pageY;
+    elm.addClass("learnplus-alert-dragging");
+
+    var mousemove = (e) => {
+        e.preventDefault();
+        var diffX = e.pageX - startX;
+        var diffY = e.pageY - startY;
+
+        var percent = Math.abs(diffX) / 300;
+        elm.css("opacity", 1 - percent);
+        elm.css("filter", `blur(${percent * 5}px)`);
+
+        elm.css("transform", `translateX(${diffX}px)`);
+    };
+
+    var mouseup = (e) => {
+        e.preventDefault();
+        elm.css("transform", "translateX(0px)");
+        elm.removeClass("learnplus-alert-dragging");
+
+        elm.css("opacity", 1);
+        elm.css("filter", "blur(0px)");
+
+        $(document).off("mouseup", mouseup);
+        $(document).off("mousemove", mousemove);
+
+        var diffX = e.pageX - startX;
+        var diffY = e.pageY - startY;
+
+        if (Math.abs(diffX) > 300) {
+            alert.close();
+            elm.removeClass("learnplus-alert-dragging");
+        }
+    };
+
+    $(document).on("mousemove", mousemove);
+    $(document).on("mouseup", mouseup);
+});
