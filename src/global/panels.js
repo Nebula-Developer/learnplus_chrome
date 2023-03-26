@@ -44,10 +44,6 @@ class Panel {
 
         if ($(".learnplus-wrapper").length > 0) {
             $(".learnplus-wrapper").append(panel);
-        } else {
-            $("body").append("<div class='learnplus-wrapper'></div>");
-            $(".learnplus-wrapper").append(panel);
-            $(".learnplus-wrapper").append("<div class='learnplus-window-scale-overlay'></div>");
         }
 
         var toPush = {
@@ -411,23 +407,6 @@ function loadLoginPanels() {
     });
 }
 
-function loadMainPanels() {
-    var mainPanel = new Panel(0, 0, 500, 500, "Main", `
-        <div class="learnplus-text-large learnplus-text-1">Main Panel</div>
-        <div class="learnplus-text-3 learnplus-mt-5 learnplus-text-center learnplus-logout-link learnplus-text-button-2">Logout</div>
-    `);
-
-    mainPanel.create();
-
-    var logoutLink = mainPanel.panel.find(".learnplus-logout-link");
-
-    logoutLink.on("click", function() {
-        globalBrowser.setStorage("token", null);
-        mainPanel.close();
-        loadLoginPanels();
-    });
-}
-
 function setWindowSize(pos) {
     var windowOverlay = $(".learnplus-window-scale-overlay");
     var width = "calc(100% - 20px)";
@@ -506,8 +485,6 @@ globalBrowser.getStorage("token").then((token) => {
         loginToken(json.username, json.token).then((res) => {
             if (!res.success) {
                 loadLoginPanels();
-            } else {
-                loadMainPanels();
             }
         });
     } else {
