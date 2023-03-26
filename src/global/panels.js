@@ -101,8 +101,8 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
             newY -= 20;
             
             setWindowSize("none");
-            panel.css("left", newX);
-            panel.css("top", newY);
+            panel.css("left", newX) - $(window).scrollLeft();
+            panel.css("top", newY - $(window).scrollTop());
         }
     }
 

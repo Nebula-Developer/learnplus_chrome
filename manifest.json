@@ -17,7 +17,7 @@
                 "lib/jquery.js",
                 "lib/socket.io.min.js",
                 "src/global/socket.js",
-                "src/global/graphics.js"
+                "src/global/panels.js"
             ]
         }
     ]
