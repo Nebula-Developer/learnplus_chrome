@@ -1,4 +1,5 @@
 var active_panels = [ ];
+var loginCallbacks = [ ];
 
 class Panel {
     constructor(x, y, width, height, title, content, strictScale = false) {
@@ -362,6 +363,10 @@ function loadLoginPanels() {
                         token: res.data.token
                     }));
                 }
+
+                for (var i = 0; i < loginCallbacks.length; i++) {
+                    loginCallbacks[i](res.data);
+                }
             }
         })
     });
@@ -388,6 +393,10 @@ function loadLoginPanels() {
                         username: res.data.username,
                         token: res.data.token
                     }));
+                }
+
+                for (var i = 0; i < loginCallbacks.length; i++) {
+                    loginCallbacks[i](res.data);
                 }
             }
         });
@@ -485,6 +494,10 @@ globalBrowser.getStorage("token").then((token) => {
         loginToken(json.username, json.token).then((res) => {
             if (!res.success) {
                 loadLoginPanels();
+            } else {
+                for (var i = 0; i < loginCallbacks.length; i++) {
+                    loginCallbacks[i](res.data);
+                }
             }
         });
     } else {
