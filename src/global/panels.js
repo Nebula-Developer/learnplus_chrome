@@ -16,28 +16,11 @@ class Panel {
         var panel = $("<div class='learnplus-panel' learnplus-panel-id='" + panelID + "' style='z-index: " + (active_panels.length + 99999) + "'></div>");
         panel.css("left", this.x);
         panel.css("top", this.y);
-        if (this.strictScale) {
-            panel.css("width", this.width);
-            panel.css("height", this.height);
-        } else {
-            panel.css("min-width", this.width);
-            panel.css("min-height", this.height);
-        }
-
-        var resizeWrapper = $(`
-            <div class='learnplus-panel-resize-wrapper'>
-                <div class='learnplus-panel-resize learnplus-panel-resize-t'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-r'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-b'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-l'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-tl'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-tr'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-bl'></div>
-                <div class='learnplus-panel-resize learnplus-panel-resize-br'></div>
-            </div>
-        `);
-
-        panel.append(resizeWrapper);
+        
+        panel.css("width", this.width);
+        panel.css("height", this.height);
+        panel.css("min-width", this.width);
+        panel.css("min-height", this.height);
 
         var topbar = $("<div class='learnplus-panel-topbar'></div>");
         panel.append(topbar);
@@ -49,9 +32,9 @@ class Panel {
         var buttons = $("<div class='learnplus-panel-buttons'></div>");
         topbar.append(buttons);
 
-        var close = $("<div class='learnplus-panel-close'><i class='fas fa-times learnplus-panel-close-icon'></i></div>");
+        var close = $("<div class='learnplus-panel-close'><img ondragstart='return false;' class='learnplus-panel-close-icon' src='https://learnplus.nebuladev.net/Cross.png'></div>");
         close.click(() => {
-            panel.remove();
+            this.close();
         });
         buttons.append(close);
 
@@ -78,16 +61,20 @@ class Panel {
 
         // make it the top panel
         var index = active_panels.indexOf(toPush);
-        if (index > -1) {
-            active_panels.splice(index, 1);
-        }
+        if (index > -1) active_panels.splice(index, 1);
 
         active_panels.push(toPush);
+        this.panel = panel;
+        this.id = panelID;
+        this.active = active_panels.length - 1;
+
+        this.close = () => { this.panel.addClass("learnplus-panel-closed"); };
+        this.open = () => { this.panel.removeClass("learnplus-panel-closed"); };
+        this.remove = () => { this.panel.remove(); };
     }
 }
 
-$(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
-    // Make sure we are not on the close button
+function handleTopbarClick(e) {
     if ($(e.target).hasClass("learnplus-panel-close") || $(e.target).hasClass("learnplus-panel-close-icon")) return;
     var panel = $(this).parent();
     var panelFind = active_panels.find((p) => { return p.id == panel.attr("learnplus-panel-id"); });
@@ -259,9 +246,9 @@ $(document).on("mousedown", ".learnplus-panel-topbar", function(e) {
 
     $(document).on("mousemove", docMouseMove);
     $(document).on("mouseup", docMouseUp);
-});
+}
 
-$(document).on("mousedown", ".learnplus-panel", function(e) {
+function handlePanelClick(e) {
     var panel = $(this);
     var panelID = panel.attr("learnplus-panel-id");
     var pFind = active_panels.find((p) => { return p.id == panelID; });
@@ -272,7 +259,13 @@ $(document).on("mousedown", ".learnplus-panel", function(e) {
         active_panels.push(pFind);
         updatePanelZIndex();
     }
-});
+
+    $(".learnplus-panel-active").removeClass("learnplus-panel-active");
+    panel.addClass("learnplus-panel-active");
+}
+
+$(document).on("mousedown", ".learnplus-panel-topbar", handleTopbarClick);
+$(document).on("mousedown", ".learnplus-panel", handlePanelClick);
 
 function updatePanelZIndex() {
     for (var i = 0; i < active_panels.length; i++) {
@@ -280,15 +273,21 @@ function updatePanelZIndex() {
     }
 }
 
-socket.emit('get', 'panel.css', (data) => {
-    if (data.success) {
-        var style = $("<style></style>");
-        style.text(data.data);
-        $("head").append(style);
-    }
-});
+function loadPanelStylesheets() {
+    $("head").append(`  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/fontawesome.css" integrity="sha384-jLKHWM3JRmfMU0A5x5AkjWkw/EYfGUAGagvnfryNV3F9VqM98XiIH7VBGVoxVSc7" crossorigin="anonymous"/>`);
+    $("head").append(`<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/solid.css" integrity="sha384-Tv5i09RULyHKMwX0E8wJUqSOaXlyu3SQxORObAI08iUwIalMmN5L6AvlPX2LMoSE" crossorigin="anonymous"/>`);
+    socket.emit('get', 'panel.css', (data) => {
+        if (data.success) {
+            var style = $("<style></style>");
+            style.text(data.data);
+            $("head").append(style);
+        }
+    });
+}
 
-$(window).on("resize", function() {
+loadPanelStylesheets();
+
+function handlePanelLocations() {
     $(".learnplus-panel").each(function() {
         var panel = $(this);
         var left = panel.offset().left;
@@ -302,32 +301,103 @@ $(window).on("resize", function() {
 
         panel.css("left", left);
         panel.css("top", top);
+
+        var width = panel.width();
+        var height = panel.height();
+
+        width = left + width > $(window).width() ? $(window).width() - left : width;
+        height = top + height > $(window).height() ? $(window).height() - top : height;
+
+        width = Math.min(width, $(window).width());
+        height = Math.min(height, $(window).height());
+
+        panel.css("width", width);
+        panel.css("height", height);
+
+        var panelID = panel.attr("learnplus-panel-id");
+        var pFind = active_panels.find((p) => { return p.id == panelID; });
+        pFind.width = width;
+        pFind.height = height;
     });
-});
+}
 
-$("head").append(`<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />`);
+$(window).on("resize", handlePanelLocations);
 
-var testPanel = new Panel(100, 100, 300, 300, "Test Panel", `
-<div class="learnplus-text-1">Hello World!</div>
-<div class="learnplus-text-2">This is a test panel.</div>
-<div class="learnplus-text-3">This is a test panel.</div>
-<div class="learnplus-button-1">Test Button</div>
-`);
+function loadLoginPanels() {
+    var loginPanel = new Panel(500, 300, 500, 325, "Login", `
+        <div class="learnplus-text-large learnplus-text-1">Login to LearnPlus</div>
+        <div class="learnplus-text-3 learnplus-mt-5 learnplus-login-error"></div>
+        <input type="text" class="learnplus-input-1 learnplus-mt-25 learnplus-username-input" placeholder="Username or Email"/>
+        <input type="password" class="learnplus-input-1 learnplus-mt-5 learnplus-password-input" placeholder="Password"/>
+        <div class="learnplus-button-1 learnplus-mt-15 learnplus-login-button">Login</div>
+        <div class="learnplus-text-3 learnplus-mt-15 learnplus-text-center learnplus-register-link learnplus-text-button-2">Don't have an account? Register here.</div>
+    `);
 
-var testPanel2 = new Panel(100, 100, 300, 300, "Test Panel 2", `
-<div class="learnplus-text-1">Hello World!</div>
-<div class="learnplus-text-2">This is a test 2 panel.</div>
-<div class="learnplus-button-2">Test Button - With two!</div>
-<div class="learnplus-button-1 learnplus-button-disabled">Test Button - Disabled</div>
-`);
+    var registerPanel = new Panel(500, 300, 500, 410, "Register", `
+        <div class="learnplus-text-large learnplus-text-1">Create a new LearnPlus account</div>
+        <div class="learnplus-text-3 learnplus-mt-5 learnplus-register-error"></div>
+        <input type="text" class="learnplus-input-1 learnplus-mt-25  learnplus-username-input" placeholder="Username"/>
+        <input type="email" class="learnplus-input-1 learnplus-mt-5  learnplus-email-input" placeholder="Email"/>
+        <input type="password" class="learnplus-input-1 learnplus-mt-5 learnplus-password-input" placeholder="Password"/>
+        <input type="password" class="learnplus-input-1 learnplus-mt-5 learnplus-password-confirm-input" placeholder="Confirm Password"/>
+        <div class="learnplus-button-1 learnplus-mt-15 learnplus-register-button">Create Account</div>
+        <div class="learnplus-text-3 learnplus-mt-15 learnplus-text-center learnplus-login-link learnplus-text-button-2">Already have an account? Login here.</div>
+    `);
+    
+    loginPanel.create();
+    registerPanel.create();
+    registerPanel.close();
 
-testPanel.create();
-testPanel2.create();
+    var loginButton = loginPanel.panel.find(".learnplus-login-button");
+    var registerButton = registerPanel.panel.find(".learnplus-register-button");
 
-testPanel2.create();
-testPanel2.create();
-testPanel2.create();
-testPanel2.create();
+    loginButton.on("click", function() {
+        var username = loginPanel.panel.find(".learnplus-username-input").val();
+        var password = loginPanel.panel.find(".learnplus-password-input").val();
+        login(username, password).then((res) => {
+            if (!res.success) {
+                loginPanel.panel.find(".learnplus-login-error").text(res.error);
+            } else {
+                loginPanel.close();
+            }
+        })
+    });
+
+    registerButton.on("click", function() {
+        var username = registerPanel.panel.find(".learnplus-username-input").val();
+        var email = registerPanel.panel.find(".learnplus-email-input").val();
+        var password = registerPanel.panel.find(".learnplus-password-input").val();
+        var passwordConfirm = registerPanel.panel.find(".learnplus-password-confirm-input").val();
+
+        if (password != passwordConfirm) {
+            registerPanel.panel.find(".learnplus-register-error").text("Passwords do not match");
+            return;
+        }
+
+        createAccount(username, password, email).then((res) => {
+            if (!res.success) {
+                registerPanel.panel.find(".learnplus-register-error").text(res.error);
+            } else {
+                registerPanel.close();
+            }
+        });
+    });
+
+    var loginLink = registerPanel.panel.find(".learnplus-login-link");
+    var registerLink = loginPanel.panel.find(".learnplus-register-link");
+
+    loginLink.on("click", function() {
+        registerPanel.close();
+        loginPanel.open();
+    });
+
+    registerLink.on("click", function() {
+        loginPanel.close();
+        registerPanel.open();
+    });
+}
+
+loadLoginPanels();
 
 function setWindowSize(pos) {
     var windowOverlay = $(".learnplus-window-scale-overlay");
