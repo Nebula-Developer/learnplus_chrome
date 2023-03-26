@@ -71,6 +71,11 @@ socket.on('newMessage', (data) => {
         var messagePanelContents = panel.panel.panel.find('.message-panel-list');
         messagePanelContents.append(message);
         messagePanelContents.parent().scrollTop(messagePanelContents.height());
+
+        var isPanelOpen = panel.panel.panel.css('opacity') == 1;
+        if (!isPanelOpen) {
+            showAlert("New Message", "<div class='learnplus-text-2'>You have a new message in " + data.channel + ".</div>");
+        }
     }
 });
 
