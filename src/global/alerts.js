@@ -7,18 +7,32 @@ class Alert {
     }
 
     show() {
-        var elm = $(`<div class="learnplus-alert">
-            <div class="learnplus-alert-title">${this.title}</div>
-            <div class="learnplus-alert-content">${this.content}</div>
-        </div>`);
+        var alertID = Math.floor(Math.random() * 1000000000) + Date.now();
+        var elm = $(`<div class="learnplus-alert" id="learnplus-alert-${alertID}">
+                        <div class="learnplus-alert-title">${this.title}</div>
+                        <div class="learnplus-alert-content">${this.content}</div>
+                    </div>`);
 
         $(".learnplus-alerts-wrapper").append(elm);
 
         this.close = function() {
-            elm.fadeOut(200, () => {
+            var wasLastInStack = active_alerts[0].elm.is(elm);
+            if (!wasLastInStack) $(".learnplus-alerts-wrapper").addClass("learnplus-alerts-wrapper-blur");
+
+            function removeAlertFinal() {
                 elm.remove();
-                active_alerts.splice(active_alerts.indexOf(this), 1);
-            });
+                $(".learnplus-alert").css("transform", "translateY(0px)");
+                active_alerts = active_alerts.filter((a) => !a.elm.is(elm));
+            }
+
+            elm.css("opacity", "0");
+            
+            if (!wasLastInStack) {
+                setTimeout(() => {
+                    $(".learnplus-alerts-wrapper").removeClass("learnplus-alerts-wrapper-blur");
+                    removeAlertFinal();
+                }, 300);
+            } else removeAlertFinal();
         };
 
         active_alerts.push({
@@ -41,6 +55,9 @@ function showAlert(title, content, time = -1) {
 }
 
 showAlert("test", "<div class='learnplus-text-medium learnplus-text-2'>This is a test alert to demonstrate the power of the LearnPlus library.</div>");
+showAlert("test", "<div class='learnplus-text-medium learnplus-text-2'>This is a test alert to demonstrate the power of the LearnPlus library.</div>");
+showAlert("test", "<div class='learnplus-text-medium learnplus-text-2'>This is a test alert to demonstrate the power of the LearnPlus library.</div>");
+showAlert("test", "<div class='learnplus-text-medium learnplus-text-2'>This is a test alert to demonstrate the power of the LearnPlus library.</div>");
 
 function loadAlertStylesheets() {
     socket.emit('get', 'alerts.css', (data) => {
@@ -54,11 +71,15 @@ function loadAlertStylesheets() {
 
 loadAlertStylesheets();
 
+var alertDragDist = 250;
+
 // When we click an alert and drag it more than 300px to the left, we close it
 $(document).on("mousedown", ".learnplus-alert", function(e) {
     e.preventDefault();
     var elm = $(this);
-    var alert = active_alerts.find((a) => a.elm.is(elm)).alert;
+    var found = active_alerts.find((a) => a.elm.is(elm));
+    if (!found) return;
+    var alert = found.alert;
 
     var startX = e.pageX;
     var startY = e.pageY;
@@ -67,14 +88,17 @@ $(document).on("mousedown", ".learnplus-alert", function(e) {
     var mousemove = (e) => {
         e.preventDefault();
         var diffX = e.pageX - startX;
-        var diffY = e.pageY - startY;
 
-        var percent = Math.abs(diffX) / 300;
+        var percent = Math.abs(diffX) / alertDragDist;
         elm.css("opacity", 1 - percent);
         elm.css("filter", `blur(${percent * 5}px)`);
+        var lerpDiff = diffX / 2.5;
 
-        elm.css("transform", `translateX(${diffX}px)`);
-    };
+        elm.css("transform", `translateX(${lerpDiff}px) rotate(${lerpDiff / 30}deg) translateY(${-lerpDiff / 10}px)`);
+        var height = elm.height() + 12;
+    }
+
+    var startTime = Date.now();
 
     var mouseup = (e) => {
         e.preventDefault();
@@ -90,7 +114,7 @@ $(document).on("mousedown", ".learnplus-alert", function(e) {
         var diffX = e.pageX - startX;
         var diffY = e.pageY - startY;
 
-        if (Math.abs(diffX) > 300) {
+        if (Math.abs(diffX) > alertDragDist) {
             alert.close();
             elm.removeClass("learnplus-alert-dragging");
         }
