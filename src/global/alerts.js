@@ -9,7 +9,12 @@ class Alert {
     show() {
         var alertID = Math.floor(Math.random() * 1000000000) + Date.now();
         var elm = $(`<div class="learnplus-alert" id="learnplus-alert-${alertID}">
-                        <div class="learnplus-alert-title">${this.title}</div>
+                        <div class="learnplus-alert-title">
+                            ${this.title}
+                            <div class="learnplus-alert-close">
+                                <img src="${root}/Cross.png" class="learnplus-alert-close-img">
+                            </div>
+                        </div>
                         <div class="learnplus-alert-content">${this.content}</div>
                     </div>`);
 
@@ -41,6 +46,19 @@ class Alert {
                 active_alerts = active_alerts.filter((a) => !a.elm.is(elm));
             });
         };
+
+        this.closeAnim = function() {
+            elm.animate({
+                opacity: 0
+            }, 200, () => {
+                this.close();
+            });
+        }
+
+        var close = elm.find(".learnplus-alert-close");
+        close.click(() => {
+            this.closeAnim();
+        });
 
         active_alerts.push({
             elm: elm,
@@ -74,7 +92,7 @@ function loadAlertStylesheets() {
 
 loadAlertStylesheets();
 
-var alertDragDist = 340;
+var alertDragDist = 100;
 
 // When we click an alert and drag it more than 300px to the left, we close it
 $(document).on("mousedown", ".learnplus-alert", function(e) {
@@ -127,4 +145,11 @@ $(document).on("mousedown", ".learnplus-alert", function(e) {
 
     $(document).on("mousemove", mousemove);
     $(document).on("mouseup", mouseup);
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "g" && e.ctrlKey) {
+        var alert = new Alert("Test", "<div class='learnplus-text-1'>This is a test alert</div>");
+        alert.show();
+    }
 });

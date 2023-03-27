@@ -15,7 +15,7 @@ loginCallbacks.push((account) => {
         messagePanelWrapper.append(messagePanelContents);
         messagePanelWrapper.append(messagePanelInput);
 
-        var messagePanel = new Panel($(window).width() / 2 - 200, $(window).height() / 2 - 200, 400, 400, 'Message', messagePanelWrapper.html());
+        var messagePanel = new Panel($(window).width() / 2 - 200, $(window).height() / 2 - 200, 400, 400, 'Messages - ' + channel.name, messagePanelWrapper.html());
         messagePanel.create();
         messagePanel.channel = channels[i];
 
@@ -97,7 +97,7 @@ var createChannelPanel = new Panel($(window).width() / 2 - 200, $(window).height
                 <div class="create-channel-panel-input-title learnplus-text-2">Channel Name</div>
                 <input type="text" class="create-channel-panel-input-input learnplus-input-1" placeholder="Channel Name">
             </div>
-            <div class="create-channel-panel-input">
+            <div class="create-channel-panel-input learnplus-mt-10">
                 <div class="create-channel-panel-input-title learnplus-text-2">Channel Password (Optional)</div>
                 <input type="text" class="create-channel-panel-input-input learnplus-input-1" placeholder="Channel Password">
             </div>
@@ -116,7 +116,7 @@ function createChannel() {
 
     socket.emit('createChannel', { name: name, password: password }, (res) => {
         console.log(res);
-        if (res) {
+        if (res.success) {
             createChannelPanel.close();
             socket.emit('joinChannel', { id: "" + res, password: password }, (res) => {
                 if (res.success) {
